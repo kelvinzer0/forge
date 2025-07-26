@@ -28,8 +28,7 @@ pub struct Environment {
     pub shell: String,
     /// The base path relative to which everything else stored.
     pub base_path: PathBuf,
-    /// Base URL for Forge's backend APIs
-    pub forge_api_url: Url,
+    
     /// Configuration for the retry mechanism
     pub retry_config: RetryConfig,
     /// The maximum number of lines returned for FSSearch.

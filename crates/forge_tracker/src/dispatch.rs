@@ -27,7 +27,7 @@ const VERSION: &str = match option_env!("APP_VERSION") {
     None => env!("CARGO_PKG_VERSION"),
 };
 
-const PARAPHRASE: &str = "forge_key";
+const PARAPHRASE: &str = "";
 
 const DEFAULT_CLIENT_ID: &str = "<anonymous>";
 

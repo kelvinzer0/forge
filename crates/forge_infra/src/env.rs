@@ -114,11 +114,7 @@ impl ForgeEnvironmentInfra {
         let cwd = self.cwd.clone();
         let retry_config = self.resolve_retry_config();
 
-        let forge_api_url = self
-            .get_env_var("FORGE_API_URL")
-            .as_ref()
-            .and_then(|url| Url::parse(url.as_str()).ok())
-            .unwrap_or_else(|| Url::parse(Provider::FORGE_URL).unwrap());
+        
 
         Environment {
             os: std::env::consts::OS.to_string(),
@@ -137,7 +133,7 @@ impl ForgeEnvironmentInfra {
             stdout_max_suffix_length: 200,
             http: self.resolve_timeout_config(),
             max_file_size: 256 << 10, // 256 KiB
-            forge_api_url,
+            
         }
     }
 

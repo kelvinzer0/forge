@@ -32,11 +32,7 @@ impl<F: EnvironmentInfra> ForgeProviderRegistry<F> {
         }
         None
     }
-    fn get_provider(&self, forge_config: AppConfig) -> Option<Provider> {
-        if let Some(forge_key) = &forge_config.key_info {
-            let provider = Provider::forge(forge_key.api_key.as_str());
-            return Some(override_url(provider, self.provider_url()));
-        }
+    fn get_provider(&self, _forge_config: AppConfig) -> Option<Provider> {
         resolve_env_provider(self.provider_url(), self.infra.as_ref())
     }
 }
@@ -60,8 +56,8 @@ fn resolve_env_provider<F: EnvironmentInfra>(
     url: Option<ProviderUrl>,
     env: &F,
 ) -> Option<Provider> {
-    let keys: [ProviderSearch; 6] = [
-        ("FORGE_KEY", Box::new(Provider::forge)),
+    let keys: [ProviderSearch; 5] = [
+        
         ("OPENROUTER_API_KEY", Box::new(Provider::open_router)),
         ("REQUESTY_API_KEY", Box::new(Provider::requesty)),
         ("XAI_API_KEY", Box::new(Provider::xai)),
