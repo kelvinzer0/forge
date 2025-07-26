@@ -1,8 +1,7 @@
 use std::path::{Path, PathBuf};
 
-use forge_domain::{Environment, Provider, RetryConfig};
+use forge_domain::{Environment, RetryConfig};
 use forge_services::EnvironmentInfra;
-use reqwest::Url;
 
 #[derive(Clone)]
 pub struct ForgeEnvironmentInfra {

@@ -6,11 +6,11 @@ use anyhow::{Context, Result};
 use colored::Colorize;
 use convert_case::{Case, Casing};
 use forge_api::{
-    API, AgentId, AppConfig, ChatRequest, ChatResponse, Conversation, ConversationId, Event,
+    API, AgentId, ChatRequest, ChatResponse, Conversation, ConversationId, Event,
     InterruptionReason, Model, ModelId, Workflow,
 };
 use forge_display::{MarkdownFormat, TitleFormat};
-use forge_domain::{McpConfig, McpServerConfig, Provider, Scope};
+use forge_domain::{McpConfig, McpServerConfig, Scope};
 use forge_fs::ForgeFS;
 use forge_spinner::SpinnerManager;
 use forge_tracker::ToolCallPayload;
@@ -83,7 +83,7 @@ impl<A: API + 'static, F: Fn() -> A> UI<A, F> {
         self.api = Arc::new((self.new_api)());
         self.init_state(false).await?;
         banner::display()?;
-        self.trace_user();
+        
         Ok(())
     }
 
@@ -194,8 +194,7 @@ impl<A: API + 'static, F: Fn() -> A> UI<A, F> {
 
         // Display the banner in dimmed colors since we're in interactive mode
         banner::display()?;
-        self.init_state(true).await?;
-        self.trace_user();
+        
 
         // Get initial input from file or prompt
         let mut command = match &self.cli.command {
@@ -325,14 +324,7 @@ impl<A: API + 'static, F: Fn() -> A> UI<A, F> {
                 self.on_new().await?;
             }
             Command::Info => {
-                let mut info = Info::from(&self.state).extend(Info::from(&self.api.environment()));
-
-                // Add user information if available
-                if let Ok(config) = self.api.app_config().await
-                    && let Some(login_info) = &config.key_info
-                {
-                    info = info.extend(Info::from(login_info));
-                }
+                let info = Info::from(&self.state).extend(Info::from(&self.api.environment()));
 
                 self.writeln(info)?;
             }
@@ -421,29 +413,7 @@ impl<A: API + 'static, F: Fn() -> A> UI<A, F> {
                     self.on_agent_change(selected_agent.id).await?;
                 }
             }
-            Command::Login => {
-                self.spinner.start(Some("Logging in"))?;
-                self.api.logout().await?;
-                self.login().await?;
-                self.spinner.stop(None)?;
-                let config: AppConfig = self.api.app_config().await?;
-                tracker::login(
-                    config
-                        .key_info
-                        .and_then(|v| v.auth_provider_id)
-                        .unwrap_or_default(),
-                );
-                let provider = self.api.provider().await?;
-                self.state.provider = Some(provider);
-            }
-            Command::Logout => {
-                self.spinner.start(Some("Logging out"))?;
-                self.api.logout().await?;
-                self.spinner.stop(None)?;
-                self.writeln(TitleFormat::info("Logged out"))?;
-                // Exit the UI after logout
-                return Ok(true);
-            }
+            
         }
 
         Ok(false)
@@ -574,7 +544,6 @@ impl<A: API + 'static, F: Fn() -> A> UI<A, F> {
 
     /// Initialize the state of the UI
     async fn init_state(&mut self, first: bool) -> Result<Workflow> {
-        let provider = self.init_provider().await?;
         let mut workflow = self.api.read_workflow(self.cli.workflow.as_deref()).await?;
         if workflow.model.is_none() {
             workflow.model = Some(
@@ -594,44 +563,11 @@ impl<A: API + 'static, F: Fn() -> A> UI<A, F> {
             .await?;
 
         self.command.register_all(&base_workflow);
-        self.state = UIState::new(self.api.environment(), base_workflow).provider(provider);
+        self.state = UIState::new(self.api.environment(), base_workflow);
 
         Ok(workflow)
     }
-    async fn init_provider(&mut self) -> Result<Provider> {
-        match self.api.provider().await {
-            // Use the forge key if available in the config.
-            Ok(provider) => Ok(provider),
-            Err(_) => {
-                // If no key is available, start the login flow.
-                self.login().await?;
-                let config: AppConfig = self.api.app_config().await?;
-                tracker::login(
-                    config
-                        .key_info
-                        .and_then(|v| v.auth_provider_id)
-                        .unwrap_or_default(),
-                );
-                self.api.provider().await
-            }
-        }
-    }
-    async fn login(&mut self) -> Result<()> {
-        let auth = self.api.init_login().await?;
-        open::that(auth.auth_url.as_str()).ok();
-        self.writeln(TitleFormat::info(
-            format!("Login here: {}", auth.auth_url).as_str(),
-        ))?;
-        self.spinner.start(Some("Waiting for login to complete"))?;
-
-        self.api.login(&auth).await?;
-
-        self.spinner.stop(None)?;
-
-        self.writeln(TitleFormat::info("Login completed".to_string().as_str()))?;
-
-        Ok(())
-    }
+    
 
     async fn on_message(&mut self, content: Option<String>) -> Result<()> {
         let conversation_id = self.init_conversation().await?;
@@ -823,16 +759,7 @@ impl<A: API + 'static, F: Fn() -> A> UI<A, F> {
         Ok(())
     }
 
-    fn trace_user(&self) {
-        let api = self.api.clone();
-        // NOTE: Spawning required so that we don't block the user while querying user
-        // info
-        tokio::spawn(async move {
-            if let Ok(Some(user_info)) = api.user_info().await {
-                tracker::login(user_info.auth_provider_id.into_string());
-            }
-        });
-    }
+    
 }
 
 fn parse_env(env: Vec<String>) -> BTreeMap<String, String> {

@@ -4,7 +4,6 @@ use forge_app::Services;
 
 use crate::app_config::ForgeConfigService;
 use crate::attachment::ForgeChatRequest;
-use crate::auth::ForgeAuthService;
 use crate::conversation::ForgeConversationService;
 use crate::discovery::ForgeDiscoveryService;
 use crate::env::ForgeEnvironmentService;
@@ -24,7 +23,7 @@ use crate::{
 };
 
 type McpService<F> = ForgeMcpService<ForgeMcpManager<F>, F, <F as McpServerInfra>::Client>;
-type AuthService<F> = ForgeAuthService<F>;
+
 
 /// ForgeApp is the main application container that implements the App trait.
 /// It provides access to all core services required by the application.
@@ -53,7 +52,7 @@ pub struct ForgeServices<F: McpServerInfra + WalkerInfra> {
     mcp_service: Arc<McpService<F>>,
     env_service: Arc<ForgeEnvironmentService<F>>,
     config_service: Arc<ForgeConfigService<F>>,
-    auth_service: Arc<AuthService<F>>,
+    
     provider_service: Arc<ForgeProviderRegistry<F>>,
 }
 
@@ -77,7 +76,7 @@ impl<
         let suggestion_service = Arc::new(ForgeDiscoveryService::new(infra.clone()));
         let conversation_service = Arc::new(ForgeConversationService::new(mcp_service.clone()));
         let config_service = Arc::new(ForgeConfigService::new(infra.clone()));
-        let auth_service = Arc::new(ForgeAuthService::new(infra.clone()));
+        
         let chat_service = Arc::new(ForgeProviderService::new(infra.clone()));
         let file_create_service = Arc::new(ForgeFsCreate::new(infra.clone()));
         let file_read_service = Arc::new(ForgeFsRead::new(infra.clone()));
@@ -109,7 +108,7 @@ impl<
             mcp_service,
             env_service,
             config_service,
-            auth_service,
+            
             chat_service,
             provider_service,
         }
@@ -151,7 +150,7 @@ impl<
     type ShellService = ForgeShell<F>;
     type McpService = McpService<F>;
     type AppConfigService = ForgeConfigService<F>;
-    type AuthService = AuthService<F>;
+    
     type ProviderRegistry = ForgeProviderRegistry<F>;
 
     fn provider_service(&self) -> &Self::ProviderService {
@@ -226,9 +225,7 @@ impl<
         &self.mcp_service
     }
 
-    fn auth_service(&self) -> &Self::AuthService {
-        self.auth_service.as_ref()
-    }
+    
 
     fn app_config_service(&self) -> &Self::AppConfigService {
         self.config_service.as_ref()

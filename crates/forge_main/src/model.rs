@@ -183,8 +183,7 @@ impl ForgeCommandManager {
             "/model" => Ok(Command::Model),
             "/tools" => Ok(Command::Tools),
             "/agent" => Ok(Command::Agent),
-            "/login" => Ok(Command::Login),
-            "/logout" => Ok(Command::Logout),
+            
             text => {
                 let parts = text.split_ascii_whitespace().collect::<Vec<&str>>();
 
@@ -273,13 +272,7 @@ pub enum Command {
     ))]
     Agent,
 
-    /// Log into the default provider.
-    #[strum(props(usage = "Log into the Forge provider"))]
-    Login,
-
-    /// Logs out of the current session.
-    #[strum(props(usage = "Logout of the current session"))]
-    Logout,
+    
 }
 
 impl Command {
@@ -300,8 +293,7 @@ impl Command {
             Command::Custom(event) => &event.name,
             Command::Shell(_) => "!shell",
             Command::Agent => "/agent",
-            Command::Login => "/login",
-            Command::Logout => "/logout",
+            
         }
     }
 

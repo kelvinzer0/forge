@@ -7,8 +7,7 @@ use forge_domain::{
 };
 use merge::Merge;
 
-use crate::user::User;
-use crate::{AppConfig, InitAuth, LoginInfo, Walker};
+use crate::{AppConfig, Walker};
 
 #[derive(Debug)]
 pub struct ShellOutput {
@@ -282,12 +281,7 @@ pub trait AppConfigService: Send + Sync {
     async fn write_app_config(&self, config: &AppConfig) -> anyhow::Result<()>;
 }
 
-#[async_trait::async_trait]
-pub trait AuthService: Send + Sync {
-    async fn init_auth(&self) -> anyhow::Result<InitAuth>;
-    async fn login(&self, auth: &InitAuth) -> anyhow::Result<LoginInfo>;
-    async fn user_info(&self, api_key: &str) -> anyhow::Result<User>;
-}
+
 #[async_trait::async_trait]
 pub trait ProviderRegistry: Send + Sync {
     async fn get_provider(&self, config: AppConfig) -> anyhow::Result<Provider>;
@@ -315,7 +309,7 @@ pub trait Services: Send + Sync + 'static + Clone {
     type NetFetchService: NetFetchService;
     type ShellService: ShellService;
     type McpService: McpService;
-    type AuthService: AuthService;
+    
     type AppConfigService: AppConfigService;
     type ProviderRegistry: ProviderRegistry;
 
@@ -337,7 +331,7 @@ pub trait Services: Send + Sync + 'static + Clone {
     fn shell_service(&self) -> &Self::ShellService;
     fn mcp_service(&self) -> &Self::McpService;
     fn environment_service(&self) -> &Self::EnvironmentService;
-    fn auth_service(&self) -> &Self::AuthService;
+    
     fn app_config_service(&self) -> &Self::AppConfigService;
     fn provider_registry(&self) -> &Self::ProviderRegistry;
 }
@@ -587,17 +581,4 @@ impl<I: Services> AppConfigService for I {
     }
 }
 
-#[async_trait::async_trait]
-impl<I: Services> AuthService for I {
-    async fn init_auth(&self) -> anyhow::Result<InitAuth> {
-        self.auth_service().init_auth().await
-    }
 
-    async fn login(&self, auth: &InitAuth) -> anyhow::Result<LoginInfo> {
-        self.auth_service().login(auth).await
-    }
-
-    async fn user_info(&self, api_key: &str) -> anyhow::Result<User> {
-        self.auth_service().user_info(api_key).await
-    }
-}

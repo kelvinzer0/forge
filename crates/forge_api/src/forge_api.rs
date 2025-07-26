@@ -3,9 +3,9 @@ use std::sync::Arc;
 
 use anyhow::{Context, Result};
 use forge_app::{
-    AppConfig, AppConfigService, AuthService, ConversationService, EnvironmentService,
-    FileDiscoveryService, ForgeApp, InitAuth, McpConfigManager, ProviderRegistry, ProviderService,
-    Services, User, Walker, WorkflowService,
+    ConversationService, EnvironmentService,
+    FileDiscoveryService, ForgeApp, McpConfigManager, ProviderService,
+    Services, Walker, WorkflowService, ProviderRegistry, AppConfigService
 };
 use forge_domain::*;
 use forge_infra::ForgeInfra;
@@ -49,7 +49,7 @@ impl<A: Services, F: CommandInfra> API for ForgeAPI<A, F> {
     async fn models(&self) -> Result<Vec<Model>> {
         Ok(self
             .services
-            .models(self.provider().await.context("User is not logged in")?)
+            .models(self.services.get_provider(self.services.read_app_config().await.unwrap_or_default()).await.context("User is not logged in")?)
             .await?)
     }
 
@@ -142,35 +142,5 @@ impl<A: Services, F: CommandInfra> API for ForgeAPI<A, F> {
         self.infra.execute_command_raw(command, cwd).await
     }
 
-    async fn init_login(&self) -> Result<InitAuth> {
-        let forge_app = ForgeApp::new(self.services.clone());
-        forge_app.init_auth().await
-    }
-
-    async fn login(&self, auth: &InitAuth) -> Result<()> {
-        let forge_app = ForgeApp::new(self.services.clone());
-        forge_app.login(auth).await
-    }
-
-    async fn logout(&self) -> Result<()> {
-        let forge_app = ForgeApp::new(self.services.clone());
-        forge_app.logout().await
-    }
-    async fn provider(&self) -> anyhow::Result<Provider> {
-        self.services
-            .get_provider(self.services.read_app_config().await.unwrap_or_default())
-            .await
-    }
-    async fn app_config(&self) -> anyhow::Result<AppConfig> {
-        self.services.read_app_config().await
-    }
-
-    async fn user_info(&self) -> Result<Option<User>> {
-        let provider = self.provider().await?;
-        if let Some(api_key) = provider.key() {
-            let user_info = self.services.user_info(api_key).await?;
-            return Ok(Some(user_info));
-        }
-        Ok(None)
-    }
+    
 }

@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 
 use anyhow::Result;
-use forge_app::{AppConfig, InitAuth, User};
+
 use forge_stream::MpscStream;
 
 use crate::*;
@@ -92,10 +92,5 @@ pub trait API: Sync + Send {
     /// project directory
     async fn write_mcp_config(&self, scope: &Scope, config: &McpConfig) -> Result<()>;
 
-    async fn init_login(&self) -> Result<InitAuth>;
-    async fn login(&self, auth: &InitAuth) -> Result<()>;
-    async fn logout(&self) -> anyhow::Result<()>;
-    async fn provider(&self) -> anyhow::Result<Provider>;
-    async fn app_config(&self) -> anyhow::Result<AppConfig>;
-    async fn user_info(&self) -> anyhow::Result<Option<User>>;
+    
 }
