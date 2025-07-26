@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use derive_setters::Setters;
 use serde::{Deserialize, Serialize};
-use url::Url;
+
 
 use crate::{HttpConfig, RetryConfig};
 
